@@ -7,13 +7,18 @@ defmodule Pong.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
-      # Starts a worker by calling: Pong.Worker.start_link(arg)
-      # {Pong.Worker, arg}
+    topology = [
+      gossip: [
+        strategy: Cluster.Strategy.Gossip
+      ]
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
+    children = [
+      {Cluster.Supervisor, [topology, [name: PingPong.Cluster.Supervisor]]},
+      {Horde.Registry, [keys: :unique, name: PingPong.Registry, members: :auto]},
+      Pong
+    ]
+
     opts = [strategy: :one_for_one, name: Pong.Supervisor]
     Supervisor.start_link(children, opts)
   end
